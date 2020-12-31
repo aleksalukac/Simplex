@@ -2,9 +2,10 @@ import numpy as np
 from numpy.linalg import inv
 
 b_final = []
+b_inv = []
 
 def GetValidBMatrix(startIndex, maxIndex, indexesToSelect, indexes = []):    
-    global b_final
+    global b_final, b_inv
     
     if(indexesToSelect == 0):
         matrixB = a[:,min(indexes)]
@@ -14,22 +15,18 @@ def GetValidBMatrix(startIndex, maxIndex, indexesToSelect, indexes = []):
                 continue
             matrixB = np.append(matrixB, a[:,i], axis=1)
         
-        print("--------------------")
-        print(matrixB)
-        print(b)
-        print(inv(matrixB))
+        b_inv = inv(matrixB)        
+        b_final = np.dot(b_inv, b)
+        if(min(b_final)):
+            return True, indexes
         
-        b1 = np.dot(inv(matrixB), b)
-        if(min(b1) > 0):
-            b_final = b1.copy()
-            return True
-        
-        return False
+        return False, None
         
     for i in range(startIndex, maxIndex - indexesToSelect + 1):
-        found = GetValidBMatrix(i + 1, maxIndex, indexesToSelect - 1, indexes + [i])
+        found, outindexes = GetValidBMatrix(i + 1, maxIndex, indexesToSelect - 1, indexes + [i])
+        
         if(found):
-            return True
+            return found, outindexes
 #%%
 
 print("Unesite broj parametara")
@@ -79,5 +76,21 @@ b = -b
 
 # %%
 
-if(!GetValidBMatrix(0, a.shape[1], b.shape[0])):
+isPossible, indexes = GetValidBMatrix(0, a.shape[1], b.shape[0])
+if(not isPossible):
     print("Greska")
+
+c_indexes =  np.matrix([c[0,i] for i in indexes])
+
+# %% generate matrix
+
+matrix = np.append(np.dot(c_indexes, b_inv), b_inv , axis=0)
+
+
+
+
+
+
+
+
+

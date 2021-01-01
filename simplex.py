@@ -4,6 +4,20 @@ from numpy.linalg import inv
 b_final = []
 b_inv = []
 
+def FindOptimalIndex(indexes_count, indexes, upper_row):
+    
+    minVal = 0
+    index = -1
+    
+    for i in range(indexes_count):
+        if(i not in indexes):
+            temp = np.dot(upper_row, a[:,i])[0, 0] - c[0, i]
+            if(temp < minVal):
+                minVal = temp
+                index = i
+    
+    return minVal, index
+
 def GetValidBMatrix(startIndex, maxIndex, indexesToSelect, indexes = []):    
     global b_final, b_inv
     
@@ -17,7 +31,7 @@ def GetValidBMatrix(startIndex, maxIndex, indexesToSelect, indexes = []):
         
         b_inv = inv(matrixB)        
         b_final = np.dot(b_inv, b)
-        if(min(b_final)):
+        if(min(b_final) >= 0):
             return True, indexes
         
         return False, None
@@ -29,7 +43,7 @@ def GetValidBMatrix(startIndex, maxIndex, indexesToSelect, indexes = []):
             return found, outindexes
 #%%
 
-print("Unesite broj parametara")
+print("Unesite broj parametara za maksimizaciju")
 number_of_params = int(input())
 
 print("Unesite koeficijente za optimizaciju")
@@ -57,7 +71,7 @@ for i in range(number_of_equations):
     
     equations += [temp_array]
     
-    print("Unesite vrednost od koje je ova nejednacina manja ili jednaka")
+    print("Unesite vrednost od koje je ova nejednacina veca ili jednaka")
     k = float(input())
     values += [-k]
 
@@ -75,8 +89,15 @@ b = -b
 #print(np.dot(b, a[:,3]))
 
 # %%
+#isPossible, indexes = GetValidBMatrix(0, a.shape[1], b.shape[0])
+isPossible, indexes = GetValidBMatrix(3, a.shape[1], b.shape[0])
 
-isPossible, indexes = GetValidBMatrix(0, a.shape[1], b.shape[0])
+indexes_in_column = []
+
+for i in range(a.shape[1]):
+    if(i not in indexes):
+        indexes_in_column += [i]
+
 if(not isPossible):
     print("Greska")
 
@@ -84,13 +105,41 @@ c_indexes =  np.matrix([c[0,i] for i in indexes])
 
 # %% generate matrix
 
-matrix = np.append(np.dot(c_indexes, b_inv), b_inv , axis=0)
+upper_row = np.dot(c_indexes, b_inv)
 
+matrix = np.append(upper_row, b_inv , axis=0)
 
+to_add = np.append(np.dot(c_indexes, b_final),b_final, axis = 0)
+matrix = np.append(matrix, to_add, axis = 1)
 
+# %% 
 
-
-
-
-
+index = -2
+while(index != -1):
+    minVal, index = FindOptimalIndex(a.shape[1], indexes, upper_row)
+    
+    if(index == -1):
+        print("Max je " + str(matrix[0,-1]))
+    
+    column_to_add = np.append(np.matrix(minVal), a[:,index], axis = 0)
+    
+    minDivided = -1
+    pivotIndex = -1
+    
+    for i in range(len(matrix[:,-1])):
+        temp = matrix[i, -1] / column_to_add[i]
+        
+        if(temp > 0):
+            if(temp < minDivided or minDivided < 0):
+                minDivided = temp
+                pivotIndex = i
+            
+    for i in range(len(matrix[:,0])):
+        for j in range(len(matrix[i,:])):
+            if(i == pivotIndex):
+                matrix[i][j] /= minDivided
+            else:
+                matrix[i][j] -= matrix[pivotIndex][j] * matrix[i][-1] / minDivided
+    
+    indexes[indexes.index(index)],  indexes_in_column[pivotIndex] = indexes_in_column[pivotIndex], indexes[indexes.index(index)]
 

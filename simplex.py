@@ -41,6 +41,7 @@ def GetValidBMatrix(startIndex, maxIndex, indexesToSelect, indexes = []):
         
         if(found):
             return found, outindexes
+
 #%%
 
 print("Unesite broj parametara za maksimizaciju")
@@ -74,9 +75,7 @@ for i in range(number_of_equations):
     print("Unesite vrednost od koje je ova nejednacina veca ili jednaka")
     k = float(input())
     values += [-k]
-
-#print(equations)
-
+    
 # %% 
 
 a = np.matrix(equations)
@@ -86,10 +85,7 @@ c = np.matrix(params + [0] * number_of_equations)
 b = np.matrix(values)
 b = b.transpose()
 b = -b
-#print(np.dot(b, a[:,3]))
 
-# %%
-#isPossible, indexes = GetValidBMatrix(0, a.shape[1], b.shape[0])
 isPossible, indexes = GetValidBMatrix(3, a.shape[1], b.shape[0])
 
 indexes_in_column = []
@@ -101,9 +97,7 @@ for i in range(a.shape[1]):
 if(not isPossible):
     print("Greska")
 
-c_indexes =  np.matrix([c[0,i] for i in indexes])
-
-# %% generate matrix
+c_indexes = np.matrix([c[0,i] for i in indexes])
 
 upper_row = np.dot(c_indexes, b_inv)
 
@@ -115,13 +109,17 @@ matrix = np.append(matrix, to_add, axis = 1)
 # %% 
 
 index = -2
+
 while(index != -1):
     minVal, index = FindOptimalIndex(a.shape[1], indexes, upper_row)
     
     if(index == -1):
         print("Max je " + str(matrix[0,-1]))
+        break
     
-    column_to_add = np.append(np.matrix(minVal), a[:,index], axis = 0)
+    temp = np.matrix(a[:, indexes_in_column[index]])
+    column_to_add = np.dot(matrix[1:, :-1], temp)
+    column_to_add = np.append(np.matrix(minVal), column_to_add, axis = 0)
     
     minDivided = -1
     pivotIndex = -1
@@ -134,12 +132,21 @@ while(index != -1):
                 minDivided = temp
                 pivotIndex = i
             
+    pivotElement = column_to_add[pivotIndex, 0]
     for i in range(len(matrix[:,0])):
-        for j in range(len(matrix[i,:])):
+        for j in range(len(matrix[:,0])):
             if(i == pivotIndex):
-                matrix[i][j] /= minDivided
+                continue
             else:
-                matrix[i][j] -= matrix[pivotIndex][j] * matrix[i][-1] / minDivided
+                #print("----------")
+                #print(matrix[pivotIndex, j])
+                #print(column_to_add[i])
+                #print(matrix[i, j])
+                matrix[i, j] = matrix[i, j] - matrix[pivotIndex, j] * column_to_add[i] / pivotElement
     
-    indexes[indexes.index(index)],  indexes_in_column[pivotIndex] = indexes_in_column[pivotIndex], indexes[indexes.index(index)]
-
+    for i in range(len(matrix[:,0])):
+        matrix[pivotIndex, i] /= pivotElement
+    
+    #indexes[pivotIndex - 1]
+    indexes[pivotIndex - 1], indexes_in_column[index] = indexes_in_column[index], indexes[pivotIndex - 1]
+    upper_row = matrix[0, 0:-1]

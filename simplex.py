@@ -72,7 +72,7 @@ for i in range(number_of_equations):
     
     equations += [temp_array]
     
-    print("Unesite vrednost od koje je ova nejednacina veca ili jednaka")
+    print("Unesite vrednost od koje je ova nejednacina manja ili jednaka")
     k = float(input())
     values += [-k]
     
@@ -138,15 +138,31 @@ while(index != -1):
             if(i == pivotIndex):
                 continue
             else:
-                #print("----------")
-                #print(matrix[pivotIndex, j])
-                #print(column_to_add[i])
-                #print(matrix[i, j])
                 matrix[i, j] = matrix[i, j] - matrix[pivotIndex, j] * column_to_add[i] / pivotElement
     
     for i in range(len(matrix[:,0])):
         matrix[pivotIndex, i] /= pivotElement
     
-    #indexes[pivotIndex - 1]
     indexes[pivotIndex - 1], indexes_in_column[index] = indexes_in_column[index], indexes[pivotIndex - 1]
     upper_row = matrix[0, 0:-1]
+    
+"""
+IN:
+3
+6 
+14
+13
+
+2
+0.5
+2
+1 
+24
+
+1
+2
+4
+60
+
+OUT: 294
+"""
